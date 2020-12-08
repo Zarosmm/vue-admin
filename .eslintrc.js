@@ -21,6 +21,10 @@ module.exports = {
         "allowFirstLine": false
       }
     }],
+    "vue/html-closing-bracket-newline": ["error", {
+    "singleline": "never",
+    "multiline": "always"
+    }],
     "vue/singleline-html-element-content-newline": "off",
     "vue/multiline-html-element-content-newline":"off",
     "vue/name-property-casing": ["error", "PascalCase"],
@@ -193,6 +197,6 @@ module.exports = {
     'object-curly-spacing': [2, 'always', {
       objectsInObjects: false
     }],
-    'array-bracket-spacing': [2, 'never']
+    'array-bracket-spacing': [2, 'never'],
   }
 }

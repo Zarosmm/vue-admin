@@ -1,4 +1,4 @@
-import { login, logout, getInfo } from '@/api/user'
+import { login, logout, getInfo } from '@/api/rbac/user'
 import { getToken, setToken, removeToken } from '@/utils/auth'
 import router, { resetRouter } from '@/router'
 
@@ -35,8 +35,9 @@ const actions = {
     return new Promise((resolve, reject) => {
       login({ username: username.trim(), password: password }).then(response => {
         const { data } = response
-        commit('SET_TOKEN', data.token)
-        setToken(data.token)
+        console.log(data)
+        commit('SET_TOKEN', 'Token ' + data.token)
+        setToken('Token ' + data.token)
         resolve()
       }).catch(error => {
         reject(error)
@@ -104,11 +105,6 @@ const actions = {
 
   // dynamically modify permissions
   async changeRoles({ commit, dispatch }, role) {
-    const token = role + '-token'
-
-    commit('SET_TOKEN', token)
-    setToken(token)
-
     const { roles } = await dispatch('getInfo')
 
     resetRouter()

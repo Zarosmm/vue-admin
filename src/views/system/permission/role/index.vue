@@ -1,45 +1,48 @@
 <template>
   <div class="app-container">
-    <el-button type="primary" @click="handleAddRole">New Role</el-button>
+    <el-button type="primary" @click="handleAddRole">新增角色</el-button>
 
     <el-table :data="rolesList" style="width: 100%;margin-top:30px;" border>
-      <el-table-column align="center" label="Role Key" width="220">
-        <template slot-scope="scope">
-          {{ scope.row.key }}
-        </template>
-      </el-table-column>
-      <el-table-column align="center" label="Role Name" width="220">
+      <el-table-column align="center" label="角色名称" width="220">
         <template slot-scope="scope">
           {{ scope.row.name }}
         </template>
       </el-table-column>
-      <el-table-column align="header-center" label="Description">
+      <el-table-column align="center" label="角色标识" width="220">
+        <template slot-scope="scope">
+          {{ scope.row.code }}
+        </template>
+      </el-table-column>
+      <el-table-column align="header-center" label="角色描述">
         <template slot-scope="scope">
           {{ scope.row.description }}
         </template>
       </el-table-column>
-      <el-table-column align="center" label="Operations">
+      <el-table-column align="center" label="操作">
         <template slot-scope="scope">
-          <el-button type="primary" size="small" @click="handleEdit(scope)">Edit</el-button>
-          <el-button type="danger" size="small" @click="handleDelete(scope)">Delete</el-button>
+          <el-button type="primary" size="small" @click="handleEdit(scope)">编辑</el-button>
+          <el-button type="danger" size="small" @click="handleDelete(scope)">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
 
-    <el-dialog :visible.sync="dialogVisible" :title="dialogType==='edit'?'Edit Role':'New Role'">
+    <el-dialog :visible.sync="dialogVisible" :title="dialogType==='编辑角色'?'编辑角色':'新增角色'">
       <el-form :model="role" label-width="80px" label-position="left">
-        <el-form-item label="Name">
-          <el-input v-model="role.name" placeholder="Role Name" />
+        <el-form-item label="角色名称">
+          <el-input v-model="role.name" placeholder="角色名称" />
         </el-form-item>
-        <el-form-item label="Desc">
+        <el-form-item label="角色标识">
+          <el-input v-model="role.code" placeholder="角色标识" />
+        </el-form-item>
+        <el-form-item label="角色描述">
           <el-input
             v-model="role.description"
             :autosize="{ minRows: 2, maxRows: 4}"
             type="textarea"
-            placeholder="Role Description"
+            placeholder="请输入角色描述"
           />
         </el-form-item>
-        <el-form-item label="Menus">
+        <el-form-item label="菜单">
           <el-tree
             ref="tree"
             :check-strictly="checkStrictly"
@@ -52,8 +55,8 @@
         </el-form-item>
       </el-form>
       <div style="text-align:right;">
-        <el-button type="danger" @click="dialogVisible=false">Cancel</el-button>
-        <el-button type="primary" @click="confirmRole">Confirm</el-button>
+        <el-button type="danger" @click="dialogVisible=false">取消</el-button>
+        <el-button type="primary" @click="confirmRole">确认</el-button>
       </div>
     </el-dialog>
   </div>
@@ -62,7 +65,8 @@
 <script>
 import path from 'path'
 import { deepClone } from '@/utils'
-import { getRoutes, getRoles, addRole, deleteRole, updateRole } from '@/api/role'
+import { getRoles, addRole, deleteRole, updateRole } from '@/api/rbac/role'
+import { getRoutes } from '@/api/rbac/menu'
 
 const defaultRole = {
   key: '',
@@ -123,7 +127,7 @@ export default {
 
         const data = {
           path: path.resolve(basePath, route.path),
-          title: route.meta && route.meta.title
+          title: route.title
 
         }
 
@@ -153,11 +157,11 @@ export default {
       if (this.$refs.tree) {
         this.$refs.tree.setCheckedNodes([])
       }
-      this.dialogType = 'new'
+      this.dialogType = '新增角色'
       this.dialogVisible = true
     },
     handleEdit(scope) {
-      this.dialogType = 'edit'
+      this.dialogType = '编辑角色'
       this.dialogVisible = true
       this.checkStrictly = true
       this.role = deepClone(scope.row)
@@ -168,19 +172,19 @@ export default {
         this.checkStrictly = false
       })
     },
-    handleDelete({ $index, row }) {
-      this.$confirm('Confirm to remove the role?', 'Warning', {
-        confirmButtonText: 'Confirm',
-        cancelButtonText: 'Cancel',
+    handleDelete({ row }) {
+      this.$confirm('确认删除该角色么?', {
+        confirmButtonText: '确认',
+        cancelButtonText: '取消',
         type: 'warning'
       })
         .then(async() => {
-          await deleteRole(row.key)
-          this.rolesList.splice($index, 1)
+          await deleteRole(row.name)
           this.$message({
             type: 'success',
-            message: 'Delete succed!'
+            message: '删除成功!'
           })
+          this.getRoles()
         })
         .catch(err => { console.error(err) })
     },
@@ -202,7 +206,7 @@ export default {
       return res
     },
     async confirmRole() {
-      const isEdit = this.dialogType === 'edit'
+      const isEdit = this.dialogType === '编辑'
 
       const checkedKeys = this.$refs.tree.getCheckedKeys()
       this.role.routes = this.generateTree(deepClone(this.serviceRoutes), '/', checkedKeys)
@@ -221,14 +225,14 @@ export default {
         this.rolesList.push(this.role)
       }
 
-      const { description, key, name } = this.role
+      const { description, code, name } = this.role
       this.dialogVisible = false
       this.$notify({
         title: 'Success',
         dangerouslyUseHTMLString: true,
         message: `
-            <div>Role Key: ${key}</div>
-            <div>Role Name: ${name}</div>
+            <div>Role Key: ${name}</div>
+            <div>Role Code: ${code}</div>
             <div>Description: ${description}</div>
           `,
         type: 'success'
